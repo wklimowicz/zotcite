@@ -739,8 +739,11 @@ function M.update_bib(zkeys, bibf, ktype, verbose)
 
     f = io.open(bibf, "w")
     if f then
-        for _, v in pairs(bib) do
-            f:write(table.concat(v, "\n") .. "\n")
+        local keys = {}
+        for k in pairs(bib) do table.insert(keys, k) end
+        table.sort(keys)
+        for _, k in ipairs(keys) do
+            f:write(table.concat(bib[k], "\n") .. "\n")
         end
         f:close()
     end
