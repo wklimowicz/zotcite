@@ -633,7 +633,11 @@ local function get_bib_ref(item, ktype)
             local names = {}
             for _, pair in pairs(e[aa]) do
                 local last, first = pair[1], pair[2]
-                table.insert(names, last .. ", " .. first)
+                if first and first ~= "" then
+                    table.insert(names, last .. ", " .. first)
+                else
+                    table.insert(names, "{" .. last .. "}")
+                end
             end
             table.insert(
                 ref,
