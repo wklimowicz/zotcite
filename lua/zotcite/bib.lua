@@ -160,7 +160,7 @@ local get_md_citations = function(kz)
 end
 
 local get_tex_citations = function(kz)
-    local kp1 = "\\%w*cit.*{"
+    local kp1 = "\\%w*cit.-{"
     local kp2 = kz and "[0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z]"
         or "[%w%-\192-\244\128-\191]+"
     local ckeys = {}

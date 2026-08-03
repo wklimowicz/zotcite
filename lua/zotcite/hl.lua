@@ -114,7 +114,7 @@ end
 
 local vt_citations_tex = function(ac, ns, lines)
     local kt = require("zotcite.config").get_key_type(vim.api.nvim_get_current_buf())
-    local kp1 = "\\%w*cit.*{"
+    local kp1 = "\\%w*cit.-{"
     local kp2 = kt == "zotero"
             and "[0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z]"
         or "[%w%-\192-\244\128-\191]+"
