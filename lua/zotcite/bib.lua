@@ -4,21 +4,18 @@ local M = {}
 
 local extract_addbibresource = function(lines)
     for _, v in pairs(lines) do
-        if v:find("\\addbibresource%{") then
-            local bib = v:gsub("\\addbibresource%{", "")
-            bib = bib:gsub("}.*", "")
-            return bib
-        end
+        local bib = v:match("\\addbibresource%{(.-)%}")
+        if bib then return bib end
     end
     return nil
 end
 
 local extract_bibliography_texcmd = function(lines)
     for _, v in pairs(lines) do
-        if v:find("\\bibliography%{") then
-            local bib = v:gsub("\\bibliography%{", "")
-            bib = bib:gsub("}.*", ".bib")
-            return bib
+        local bibs = v:match("\\bibliography%{(.-)%}")
+        if bibs then
+            local first = bibs:match("([^,]+)")
+            return first .. ".bib"
         end
     end
     return nil
@@ -57,7 +54,7 @@ local find_tex_bib = function(dir)
             zwarn("Failed to read TeX root: '" .. rootpath .. "'")
             return nil
         end
-        bib = extract_addbibresource(rootlines) or extract_bibliography_texcmd(lines)
+        bib = extract_addbibresource(rootlines) or extract_bibliography_texcmd(rootlines)
         if not bib then
             zwarn(
                 "Could not find the '\\addbibresource' or '\bibliography' command in TeX root '"
