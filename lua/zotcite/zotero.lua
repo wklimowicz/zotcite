@@ -256,15 +256,40 @@ local function getmtime(path)
     return 0
 end
 
+--- Get latest mtime considering SQLite WAL and SHM files
+---@param path string
+---@return integer
+local function get_zotero_mtime(path)
+    if not path then return 0 end
+    local t = getmtime(path)
+    local twal = getmtime(path .. "-wal")
+    if twal > t then t = twal end
+    local tshm = getmtime(path .. "-shm")
+    if tshm > t then t = tshm end
+    return t
+end
+
 local function copy_zotero_data()
     local zf = config.zotero_sqlite_path
     if not zf then return end
-    ztime = getmtime(zf)
+    ztime = get_zotero_mtime(zf)
     zcopy = config.tmpdir .. "/copy_of_zotero.sqlite"
-    local zcopy_time = getmtime(zcopy)
+    local zcopy_time = get_zotero_mtime(zcopy)
 
-    -- Make a copy of zotero.sqlite to avoid locks
-    if ztime > zcopy_time then vim.uv.fs_copyfile(zf, zcopy) end
+    -- Make a copy of zotero.sqlite and WAL/SHM to avoid locks and capture uncheckpointed transactions
+    if ztime > zcopy_time then
+        vim.uv.fs_copyfile(zf, zcopy)
+        if vim.uv.fs_stat(zf .. "-wal") then
+            vim.uv.fs_copyfile(zf .. "-wal", zcopy .. "-wal")
+        else
+            vim.uv.fs_unlink(zcopy .. "-wal")
+        end
+        if vim.uv.fs_stat(zf .. "-shm") then
+            vim.uv.fs_copyfile(zf .. "-shm", zcopy .. "-shm")
+        else
+            vim.uv.fs_unlink(zcopy .. "-shm")
+        end
+    end
 end
 
 --- Run sqlite3 and get the output
@@ -1217,7 +1242,7 @@ end
 ---@param d string Buffer name
 ---@return table
 function M.get_match(ptrn, d)
-    if getmtime(config.zotero_sqlite_path) > ztime then load_zotero_data() end
+    if get_zotero_mtime(config.zotero_sqlite_path) > ztime then load_zotero_data() end
 
     local keys = {}
     if docs[d] then
