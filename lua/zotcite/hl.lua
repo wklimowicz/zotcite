@@ -8,7 +8,8 @@ local M = {}
 ---@param s integer Column
 ---@param e integer End column
 ---@param a string
-local vt_citation = function(ns, i, s, e, c, a)
+---@param f boolean Ignore the first character
+local vt_citation = function(ns, i, s, e, c, a, f)
     if not a then return end
     local set_m = vim.api.nvim_buf_set_extmark
     local kt = require("zotcite.config").get_key_type(vim.api.nvim_get_current_buf())
@@ -23,11 +24,11 @@ local vt_citation = function(ns, i, s, e, c, a)
             { virt_text = { { a, "Identifier" } }, virt_text_pos = "inline" }
         )
     else
-        if vim.tbl_contains({ "tex", "rnoweb", "bib" }, vim.bo.filetype) then
-            set_m(0, ns, i - 1, s - 1, { end_col = e, hl_group = "Identifier" })
-        else
+        if f then
             set_m(0, ns, i - 1, s - 1, { end_col = s, hl_group = "Ignore", conceal = "" })
             set_m(0, ns, i - 1, s, { end_col = e, hl_group = "Identifier" })
+        else
+            set_m(0, ns, i - 1, s - 1, { end_col = e, hl_group = "Identifier" })
         end
     end
 end
@@ -62,7 +63,7 @@ local vt_citations_md = function(ac, ns, lines)
             local s, e = v:find(kp, i)
             if not s or not e then break end
             a = ac[v:sub(s + 1, e)]
-            vt_citation(ns, k, s, e, s, a)
+            vt_citation(ns, k, s, e, s, a, true)
             i = e + 1
         end
     end
@@ -70,18 +71,27 @@ end
 
 local vt_citations_typ = function(ac, ns, lines)
     local kt = require("zotcite.config").get_key_type(vim.api.nvim_get_current_buf())
-    local kp = kt == "zotero"
-            and "<[0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z]>"
-        or "<[%w%-\192-\244\128-\191]+>"
+    local kp1 = "#cite%("
+    local kp2 = kt == "zotero"
+            and "[0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z]"
+        or "[%w%-\192-\244\128-\191]+"
     local a = ""
     for k, v in pairs(lines) do
         local i = 1
         local imax = #v
         while i < imax do
-            local s, e = v:find(kp, i)
+            local s, e = v:find(kp1, i)
             if not s or not e then break end
-            a = ac[v:sub(s + 1, e - 1)]
-            vt_citation(ns, k, s, e, e, a)
+            local j = e
+            local l = v:find("%)", j)
+            if not l then l = 1000 end
+            while j < l do
+                local s2, e2 = v:find(kp2, j)
+                if not s2 or not e2 then break end
+                a = ac[v:sub(s2, e2)]
+                vt_citation(ns, k, s2, e2, e2, a, false)
+                j = e2 + 1
+            end
             i = e + 1
         end
     end
@@ -107,7 +117,7 @@ local vt_citations_tex = function(ac, ns, lines)
                 local s2, e2 = v:find(kp2, j)
                 if not s2 or not e2 then break end
                 a = ac[v:sub(s2, e2)]
-                vt_citation(ns, k, s2, e2, e2, a)
+                vt_citation(ns, k, s2, e2, e2, a, false)
                 j = e2 + 1
             end
             i = e + 1
