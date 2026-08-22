@@ -49,7 +49,11 @@ local complete = function(callback, lnum, char)
         word = subline:match(".*{.-(%S+)$")
     else
         word = subline:match(".*@(%S+)$")
+        if vim.bo.filetype == "typst" and not word then
+            word = subline:match("#cite%(%s*<(%S+)$")
+        end
     end
+
     if not word then
         callback(nil, { isIncomplete = false, items = {} })
         return
@@ -62,7 +66,7 @@ local complete = function(callback, lnum, char)
     local text_edit_range = {
         start = {
             line = lnum,
-            character = char - 1,
+            character = char - string.len(word),
         },
         ["end"] = {
             line = lnum,
