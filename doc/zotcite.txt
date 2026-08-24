@@ -14,6 +14,7 @@
     3.5. File types                                        |zotcite_filetypes|
     3.6. Open attachment                              |zotcite_open_in_zotero|
     3.7. Show errors of command to open attachment   |zotcite_wait_attachment|
+    3.8. Custom Lua functions                                   |zotcite_hook|
  4. Troubleshooting                                  |zotcite_troubleshooting|
 
 
@@ -446,6 +447,17 @@ viewer finishes with non-zero status, anything output to the `stderr` will be
 displayed as a warning message.
 
 
+------------------------------------------------------------------------------
+3.8. Custom Lua functions                                       *zotcite_hook*
+
+If you want the execution of Lua functions to change Zotcite's behavior, set
+the `hook` config option. Currently, there is only one hook, `bib_ref` which
+changes the contents of bibliographic entries before the `bib` file is
+generated (please see an example at
+https://github.com/jalvesaq/zotcite/issues/154 and analyse the code of the
+`get_bib_ref` function at `lua/zotcite/zotero.lua`).
+
+
 ==============================================================================
 4. Troubleshooting                                   *zotcite_troubleshooting*
 
@@ -454,5 +466,11 @@ If either the plugin does not work or you want easy access to the values of
 some internal variables, do the following command:
 >vim
  :Zinfo
+
+If you are editing Typst documents with `blink.cmp` as a completion plugin and
+have the `tinymist` language server installed, you may need to manually
+trigger the completion. The reason is that `tinymist` sets `@` and `<` as
+trigger characters, and `blink.cmp` does not reset the completion after each
+keystroke.
 
 			 vim:tw=78:ts=8:ft=help:norl
