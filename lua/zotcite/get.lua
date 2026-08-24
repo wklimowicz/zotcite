@@ -10,6 +10,7 @@ local sel_list = {}
 local citation = {
     start_col = 0,
     end_col = 0,
+    prefix = "",
 }
 
 local M = {}
@@ -161,9 +162,15 @@ local finish_citation = function(ref)
     local rownr = vim.api.nvim_win_get_cursor(0)[1] - 1
     local kt = require("zotcite.config").get_key_type(vim.api.nvim_get_current_buf())
     local cite = kt == "zotero" and ref.value.key or ref.value.cite
-    if not (vim.bo.filetype == "tex" or vim.bo.filetype == "rnoweb") then
+    if
+        citation.prefix ~= "@"
+        and vim.bo.filetype ~= "tex"
+        and vim.bo.filetype ~= "rnoweb"
+        and not (vim.bo.filetype == "typst" and citation.prefix == "<")
+    then
         cite = "@" .. cite
     end
+
     vim.api.nvim_buf_set_text(
         0,
         rownr,
@@ -193,6 +200,7 @@ M.citation = function()
         end
         argmt = line:sub(first + 1, last):lower()
         citation.start_col = first
+        citation.prefix = line:sub(first, first)
     end
     seek.refs(argmt, finish_citation)
 end
