@@ -85,7 +85,6 @@ local _zbf = {
     forumTitle = "booktitle",
     genre = "type",
     history = "references",
-    institution = "institution",
     interviewMedium = "medium",
     issue = "number",
     issuingAuthority = "authority",
