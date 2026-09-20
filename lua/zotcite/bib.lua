@@ -21,6 +21,15 @@ local extract_bibliography_texcmd = function(lines)
     return nil
 end
 
+local extract_bibliography_typst = function(lines)
+    for _, v in pairs(lines) do
+        if v and v:find("#bibliography%(") then
+            return v:match('#bibliography%(%s*"(%S-)".*')
+        end
+    end
+    return nil
+end
+
 local read_lines = function(path)
     if not path or vim.fn.filereadable(path) == 0 then return nil end
     return vim.fn.readfile(path)
@@ -85,11 +94,18 @@ end
 
 local find_typst_bib = function(dir)
     local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
-    for _, v in pairs(lines) do
-        if v and v:find("#bibliography%(") then
-            return resolve_path(dir, v:match('#bibliography%(%s*"(%S-)".*'))
-        end
+    local bib = extract_bibliography_typst(lines)
+    if bib then return resolve_path(dir, bib) end
+
+    local tfr = require("zotcite.config").get_config().typst_fallback_root
+    local fallback_root = resolve_path(dir, tfr)
+    local fallback_lines = read_lines(fallback_root)
+    bib = fallback_lines and extract_bibliography_typst(fallback_lines)
+    if bib then
+        local rootdir = vim.fn.fnamemodify(fallback_root, ":p:h")
+        return resolve_path(rootdir, bib)
     end
+
     zwarn("Could not find the `#bibliography` identifier.")
     return nil
 end
