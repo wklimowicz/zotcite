@@ -49,6 +49,13 @@ local resolve_path = function(base_dir, path)
     return vim.fn.fnamemodify(base_dir .. "/" .. path, ":p")
 end
 
+local resolve_fallback_root = function(dir, fallback)
+    if type(fallback) == "function" then
+        fallback = fallback(vim.api.nvim_buf_get_name(0))
+    end
+    return resolve_path(dir, fallback)
+end
+
 local find_tex_bib = function(dir)
     local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
 
@@ -76,7 +83,7 @@ local find_tex_bib = function(dir)
     end
 
     local tfr = require("zotcite.config").get_config().tex_fallback_root
-    local fallback_root = vim.fn.fnamemodify(dir .. "/" .. tfr, ":p")
+    local fallback_root = resolve_fallback_root(dir, tfr)
     local fallback_lines = read_lines(fallback_root)
     bib = fallback_lines
         and (
@@ -98,7 +105,7 @@ local find_typst_bib = function(dir)
     if bib then return resolve_path(dir, bib) end
 
     local tfr = require("zotcite.config").get_config().typst_fallback_root
-    local fallback_root = resolve_path(dir, tfr)
+    local fallback_root = resolve_fallback_root(dir, tfr)
     local fallback_lines = read_lines(fallback_root)
     bib = fallback_lines and extract_bibliography_typst(fallback_lines)
     if bib then
